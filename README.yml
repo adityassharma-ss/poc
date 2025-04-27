@@ -1,0 +1,67 @@
+# If the above fix doesn't work, try using the official SonarCloud GitHub Action instead:
+
+name: SonarQube-Integration
+
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+    branches:
+      - '*'
+    types: [opened, synchronize, reopened]
+
+jobs:
+  sonarcloud:
+    name: SonarCloud
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for better relevancy of analysis
+      
+      - name: Set up JDK 20
+        uses: actions/setup-java@v3
+        with:
+          java-version: '20'
+          distribution: 'temurin'
+      
+      - name: Cache Maven packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+      
+      - name: Create sonar-project.properties
+        run: |
+          cat > sonar-project.properties << EOF
+          # Required properties
+          sonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+          sonar.projectName=${{ github.repository_owner }}/${{ github.event.repository.name }}
+          sonar.projectVersion=1.0
+          
+          # Source directories
+          sonar.sources=src/main
+          sonar.java.binaries=target/classes
+          sonar.java.source=20
+          
+          # Tests
+          sonar.tests=src/test
+          sonar.java.test.binaries=target/test-classes
+          
+          # Encoding
+          sonar.sourceEncoding=UTF-8
+          
+          # Coverage & Reports
+          sonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+          sonar.junit.reportPaths=target/surefire-reports
+          EOF
+      
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}

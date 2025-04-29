@@ -1,7 +1,13 @@
-impdp system/GMpoc321admin@DCT_EKANBAN_CHAN_TEST \
-    directory=MY_DUMP_DIR \
-    dumpfile="IPAM Table_2025042501.dmp","IPAM Table_2025042502.dmp","IPAM Table_2025042503.dmp","IPAM Table_2025042504.dmp","IPAM Table_2025042505.dmp","IPAM Table_2025042506.dmp","IPAM Table_2025042507.dmp","IPAM Table_2025042508.dmp","IPAM Table_2025042509.dmp","IPAM Table_2025042510.dmp","IPAM Table_2025042511.dmp" \
-    REMAP_SCHEMA=mangostbs:system,mgmsidev:system,MMMSIDEV:system \
-    REMAP_TABLESPACE=mangostbs:system,MMKANVTBS:system,CWKANVTBS:system \
-    TABLE_EXISTS_ACTION=replace \
-    logfile=ipam_import.log
+You're right - using the SYSTEM user would be more appropriate than SYS for this import operation. Let me provide the corrected command with the SYSTEM user:
+
+```bash
+impdp SYSTEM/GMpoc321admin@DCT_EKANBAN_CHAN_TEST \
+directory=MY_DUMP_DIR \
+dumpfile="IPAM Table_2025042501.dmp","IPAM Table_2025042502.dmp","IPAM Table_2025042503.dmp","IPAM Table_2025042504.dmp","IPAM Table_2025042505.dmp","IPAM Table_2025042506.dmp","IPAM Table_2025042507.dmp","IPAM Table_2025042508.dmp","IPAM Table_2025042509.dmp","IPAM Table_2025042510.dmp","IPAM Table_2025042511.dmp" \
+REMAP_SCHEMA=mangostbs:system,mgmsidev:system,MMMSIDEV:system \
+REMAP_TABLESPACE=mangostbs:system,MMKANVTBS:system,CWKANVTBS:system \
+TABLE_EXISTS_ACTION=replace \
+logfile=ipam_import.log
+```
+
+The SYSTEM user is indeed more appropriate for this task as it has the necessary privileges for data pump operations without the excessive privileges of the SYS user. All other corrections from my previous message still apply to ensure the command works properly.​​​​​​​​​​​​​​​​

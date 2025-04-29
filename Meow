@@ -1,0 +1,7 @@
+impdp system/GMpoc321admin@DCT_EKANBAN_CHAN_TEST \
+    directory=MY_DUMP_DIR \
+    dumpfile="IPAM Table_2025042501.dmp","IPAM Table_2025042502.dmp","IPAM Table_2025042503.dmp","IPAM Table_2025042504.dmp","IPAM Table_2025042505.dmp","IPAM Table_2025042506.dmp","IPAM Table_2025042507.dmp","IPAM Table_2025042508.dmp","IPAM Table_2025042509.dmp","IPAM Table_2025042510.dmp","IPAM Table_2025042511.dmp" \
+    REMAP_SCHEMA=mangostbs:system,mgmsidev:system,MMMSIDEV:system \
+    REMAP_TABLESPACE=mangostbs:system,MMKANVTBS:system,CWKANVTBS:system \
+    TABLE_EXISTS_ACTION=replace \
+    logfile=ipam_import.log

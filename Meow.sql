@@ -23,10 +23,8 @@ END;
 /
 
 export ORACLE_SID=ORCL
+export ORACLE_BASE=/u01/app/oracle
 export ORACLE_HOME=/u01/app/oracle/product/12.2.0.1/dbhome_1
 export PATH=$ORACLE_HOME/bin:$PATH
 export LD_LIBRARY_PATH=$ORACLE_HOME/lib
-export ORACLE_BASE=/u01/app/oracle
-
-
 

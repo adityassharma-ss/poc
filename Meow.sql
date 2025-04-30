@@ -1,18 +1,22 @@
 SET SERVEROUTPUT ON;
+DECLARE
+  v_sql VARCHAR2(1000);
 BEGIN
   FOR r IN (
-    SELECT table_name 
-    FROM dba_tab_columns 
-    WHERE UPPER(column_name) = 'FMA_CD' 
+    SELECT table_name, column_name, data_length, char_length
+    FROM dba_tab_columns
+    WHERE data_type = 'VARCHAR2'
       AND owner = 'SYSTEM'
+      AND data_length < 100 -- current limit
   ) LOOP
     BEGIN
-      EXECUTE IMMEDIATE 
-        'ALTER TABLE "SYSTEM"."' || r.table_name || '" MODIFY ("FMA_CD" VARCHAR2(30))';
-      DBMS_OUTPUT.PUT_LINE('Modified FMA_CD in table: ' || r.table_name);
+      v_sql := 'ALTER TABLE "SYSTEM"."' || r.table_name || 
+               '" MODIFY ("' || r.column_name || '" VARCHAR2(100))';
+      EXECUTE IMMEDIATE v_sql;
+      DBMS_OUTPUT.PUT_LINE('Modified ' || r.table_name || '.' || r.column_name || ' to 100');
     EXCEPTION
       WHEN OTHERS THEN
-        DBMS_OUTPUT.PUT_LINE('Failed to modify FMA_CD in table: ' || r.table_name || ' - ' || SQLERRM);
+        DBMS_OUTPUT.PUT_LINE('Failed to modify ' || r.table_name || '.' || r.column_name || ': ' || SQLERRM);
     END;
   END LOOP;
 END;

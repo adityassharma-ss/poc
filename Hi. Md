@@ -1,0 +1,141 @@
+# Corrected Oracle Data Pump Import Command Solution
+
+I see several issues with your import command. Let me provide a corrected version with explanation of each problem and fix.
+
+## Problems in the Original Command:
+
+1. Syntax errors in the DUMPFILE parameter - commas inside quotes and typos in filenames
+2. Syntax errors in REMAP_SCHEMA parameter - missing spaces, incorrect format
+3. Incorrect syntax for REMAP_TABLESPACE
+4. Log file permission issue
+5. Issues with directory paths and permissions
+
+## Step-by-Step Solution:
+
+### 1. First, check and create the directory object
+
+```sql
+sqlplus / as sysdba
+
+-- Check if the directory exists
+SELECT directory_name, directory_path FROM dba_directories WHERE directory_name = 'PB_DATA_DUMP';
+
+-- If it doesn't exist, create it
+CREATE OR REPLACE DIRECTORY PB_DATA_DUMP AS 'C:\Users\oracleadmin\Desktop\dpdump';
+
+-- Grant permissions
+GRANT READ, WRITE ON DIRECTORY PB_DATA_DUMP TO system;
+
+EXIT;
+```
+
+### 2. Verify DMP files exist in the directory
+
+```
+dir C:\Users\oracleadmin\Desktop\dpdump\*.dmp
+```
+
+Make sure all files are correctly named and exist in this location.
+
+### 3. Create a proper log file location
+
+```
+mkdir C:\Users\oracleadmin\Desktop\dpdump\logs
+icacls C:\Users\oracleadmin\Desktop\dpdump\logs /grant "oracleadmin:(OI)(CI)F"
+```
+
+### 4. Run the corrected import command
+
+```
+impdp system/GMpoc321admin@orcl DIRECTORY=PB_DATA_DUMP ^
+DUMPFILE=IPAMTable_2025042501.dmp,IPAMTable_2025042502.dmp,IPAMTable_2025042503.dmp,^
+IPAMTable_2025042504.dmp,IPAMTable_2025042505.dmp,IPAMTable_2025042506.dmp,^
+IPAMTable_2025042507.dmp,IPAMTable_2025042508.dmp,IPAMTable_2025042509.dmp,^
+IPAMTable_2025042510.dmp,IPAMTable_2025042511.dmp ^
+REMAP_SCHEMA=mamgostbs:system,mgmsidev:system,MMMSIDEV:system ^
+REMAP_TABLESPACE=mamgostbs:system ^
+TRANSFORM=SEGMENT_ATTRIBUTES:N ^
+CONTENT=DATA_ONLY ^
+DATA_OPTIONS=SKIP_CONSTRAINT_ERRORS ^
+LOGFILE=logs\import.log ^
+METRICS=Y
+```
+
+In this corrected command:
+- Each filename is properly separated with commas (outside of quotes)
+- REMAP_SCHEMA is correctly formatted with proper spacing
+- Used the caret (^) for line continuation in Windows
+- Changed the logfile location to a subdirectory with proper permissions
+- Kept all your desired options (TRANSFORM, CONTENT, DATA_OPTIONS, METRICS)
+
+### 5. If you still encounter log file errors:
+
+Try simplifying the command to identify the specific issue:
+
+```
+impdp system/GMpoc321admin@orcl DIRECTORY=PB_DATA_DUMP DUMPFILE=IPAMTable_2025042501.dmp LOGFILE=importtest.log
+```
+
+### 6. Alternative approach using a parameter file:
+
+```
+echo DIRECTORY=PB_DATA_DUMP > import.par
+echo DUMPFILE=IPAMTable_2025042501.dmp,IPAMTable_2025042502.dmp,IPAMTable_2025042503.dmp,IPAMTable_2025042504.dmp,IPAMTable_2025042505.dmp,IPAMTable_2025042506.dmp,IPAMTable_2025042507.dmp,IPAMTable_2025042508.dmp,IPAMTable_2025042509.dmp,IPAMTable_2025042510.dmp,IPAMTable_2025042511.dmp >> import.par
+echo REMAP_SCHEMA=mamgostbs:system,mgmsidev:system,MMMSIDEV:system >> import.par
+echo REMAP_TABLESPACE=mamgostbs:system >> import.par
+echo TRANSFORM=SEGMENT_ATTRIBUTES:N >> import.par
+echo CONTENT=DATA_ONLY >> import.par
+echo DATA_OPTIONS=SKIP_CONSTRAINT_ERRORS >> import.par
+echo LOGFILE=import.log >> import.par
+echo METRICS=Y >> import.par
+
+impdp system/GMpoc321admin@orcl parfile=import.par
+```
+
+### 7. Common causes of the ORA-39070 error:
+
+1. **Permission issues**: Make sure the Oracle service account has write access to the log directory
+   ```
+   icacls C:\Users\oracleadmin\Desktop\dpdump /grant "SYSTEM:(OI)(CI)F"
+   ```
+
+2. **Disk space**: Ensure there's enough disk space for the logs
+
+3. **Path too long**: Windows has path length limitations, try using a shorter path
+
+4. **Special characters**: Avoid special characters in path or filenames
+
+## Additional Verification and Troubleshooting:
+
+1. Check the status of your Oracle database:
+   ```
+   sqlplus / as sysdba
+   SELECT status FROM v$instance;
+   ```
+
+2. Verify all dumpfiles exist with exact matching names:
+   ```
+   dir C:\Users\oracleadmin\Desktop\dpdump\IPAMTable_*.dmp
+   ```
+
+3. Try running a test import with just one file first:
+   ```
+   impdp system/GMpoc321admin@orcl DIRECTORY=PB_DATA_DUMP DUMPFILE=IPAMTable_2025042501.dmp LOGFILE=test_import.log
+   ```
+
+4. If the error persists, create a different directory and try again:
+   ```
+   mkdir C:\impdp_test
+   icacls C:\impdp_test /grant "SYSTEM:(OI)(CI)F"
+   
+   sqlplus / as sysdba
+   CREATE OR REPLACE DIRECTORY IMPDP_TEST AS 'C:\impdp_test';
+   GRANT READ, WRITE ON DIRECTORY IMPDP_TEST TO system;
+   EXIT;
+   
+   copy C:\Users\oracleadmin\Desktop\dpdump\IPAMTable_2025042501.dmp C:\impdp_test\
+   
+   impdp system/GMpoc321admin@orcl DIRECTORY=IMPDP_TEST DUMPFILE=IPAMTable_2025042501.dmp LOGFILE=simple_test.log
+   ```
+
+This comprehensive approach should resolve your import issues by addressing all the syntax problems and potential file access issues.​​​​​​​​​​​​​​​​

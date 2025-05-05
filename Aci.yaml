@@ -1,0 +1,43 @@
+name: Build and Deploy Angular App to ACR and ACI
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    # Previous steps remain the same
+    
+    # Add these deployment steps
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    - name: Deploy to Azure Container Instances
+      uses: azure/CLI@v1
+      with:
+        inlineScript: |
+          az container create \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --name gmpocfrontend \
+            --image ${{ secrets.ACR_LOGIN_SERVER }}/gmpocfrontend:latest \
+            --registry-login-server ${{ secrets.ACR_LOGIN_SERVER }} \
+            --registry-username ${{ secrets.ACR_USERNAME }} \
+            --registry-password ${{ secrets.ACR_PASSWORD }} \
+            --dns-name-label gmpocfrontend \
+            --vnet ${{ secrets.VNET_NAME }} \
+            --subnet ${{ secrets.SUBNET_NAME }} \
+            --ports 80 \
+            --restart-policy Always \
+            --environment-variables WEBSITE_SITE_NAME=gmpocfrontend
+
+    - name: Get Application URL
+      uses: azure/CLI@v1
+      with:
+        inlineScript: |
+          echo "Your application is available at: http://gmpocfrontend.${{ secrets.LOCATION }}.azurecontainer.io"
